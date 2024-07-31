@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>File Upload and Convert</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s ease;
+            margin: 10px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Upload and Convert TXT to CSV</h1>
+    <form id="upload-form" method="post" action="/upload" enctype="multipart/form-data">
+        <input type="file" id="fileInput" name="file" accept=".txt" style="margin: 20px 0;">
+        <br>
+        <button type="button" class="btn" id="convertBtn">Convert</button>
+    </form>
+    <div id="downloadSection" class="hidden">
+        <a id="downloadLink" class="btn">Download</a>
+    </div>
+    <p id="errorMsg" class="error hidden">File does not uploaded</p>
+</div>
+<script>
+    document.getElementById('convertBtn').addEventListener('click', function() {
+        const fileInput = document.getElementById('fileInput');
+        const errorMsg = document.getElementById('errorMsg');
+        const downloadSection = document.getElementById('downloadSection');
+
+        if (fileInput.files.length === 0) {
+            errorMsg.classList.remove('hidden');
+            downloadSection.classList.add('hidden');
+        } else {
+            errorMsg.classList.add('hidden');
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const downloadLink = document.getElementById('downloadLink');
+                        downloadLink.href = `/download/${data.fileName}`;
+                        downloadLink.download = data.fileName; // Добавляем атрибут download
+                        downloadSection.classList.remove('hidden');
+                    } else {
+                        errorMsg.textContent = data.message;
+                        errorMsg.classList.remove('hidden');
+                        downloadSection.classList.add('hidden');
+                    }
+                })
+                .catch(error => {
+                    errorMsg.textContent = 'An error occurred. Please try again.';
+                    errorMsg.classList.remove('hidden');
+                    downloadSection.classList.add('hidden');
+                });
+        }
+    });
+</script>
+</body>
+</html>
